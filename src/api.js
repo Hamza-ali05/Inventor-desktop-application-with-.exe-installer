@@ -6,6 +6,9 @@ export async function getProducts() {
 export async function getProductsFromPurchases() {
   return api.getProductsFromPurchases ? api.getProductsFromPurchases() : [];
 }
+export async function getStockWithQuantity() {
+  return api.getStockWithQuantity ? api.getStockWithQuantity() : [];
+}
 export async function addProduct(data) {
   return api.addProduct ? api.addProduct(data) : null;
 }

@@ -121,7 +121,7 @@ export default function Bill() {
               <option value="">Select product</option>
               {products.filter((p) => p.quantity > 0).map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name} (₹{Number(p.sale_price).toFixed(2)})
+                  {p.name} ({Number(p.sale_price).toFixed(2)})
                 </option>
               ))}
             </select>
@@ -135,7 +135,7 @@ export default function Bill() {
               ))}
             </select>
             <span className="line-total">
-              ₹{getLineTotal(line).toFixed(2)}
+              {getLineTotal(line).toFixed(2)}
             </span>
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => removeLine(index)} disabled={lines.length <= 1}>
               Remove
@@ -147,7 +147,7 @@ export default function Bill() {
         </button>
       </div>
       <div className="bill-total card">
-        Total: ₹{total.toFixed(2)}
+        Total: {total.toFixed(2)}
         <button
           type="button"
           className="btn btn-primary"
@@ -163,7 +163,7 @@ export default function Bill() {
         <div className="modal-overlay" onClick={() => setPaymentModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>Payment method</h3>
-            <p>Total: ₹{total.toFixed(2)}</p>
+            <p>Total: {total.toFixed(2)}</p>
             <div className="modal-actions">
               <button type="button" className="btn btn-primary" onClick={() => handlePaymentChoice('cash')}>
                 Cash
@@ -209,13 +209,13 @@ export default function Bill() {
                 <tr key={i}>
                   <td>{item.product_name}</td>
                   <td>{item.quantity}</td>
-                  <td>₹{Number(item.unit_price).toFixed(2)}</td>
-                  <td>₹{Number(item.line_total).toFixed(2)}</td>
+<td>{Number(item.unit_price).toFixed(2)}</td>
+                <td>{Number(item.line_total).toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <p className="bill-total">Total: ₹{printContent.total.toFixed(2)}</p>
+          <p className="bill-total">Total: {printContent.total.toFixed(2)}</p>
         </div>
       )}
     </div>

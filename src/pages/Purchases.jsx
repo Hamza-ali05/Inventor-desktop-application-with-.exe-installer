@@ -1,58 +1,79 @@
 import { useState, useEffect } from 'react';
-import { getProducts, getPurchases, addPurchase } from '../api';
+import { getProducts, addPurchase, addProduct, getPurchases } from '../api';
 import './Purchases.css';
 
 const QUANTITY_OPTIONS = Array.from({ length: 1000 }, (_, i) => i + 1);
 
+function formatDate(str) {
+  if (!str) return '—';
+  return str.slice(0, 10);
+}
+
 export default function Purchases() {
-  const [products, setProducts] = useState([]);
   const [purchases, setPurchases] = useState([]);
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
-  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
-    product_id: '',
+    product_name: '',
     quantity: 1,
     total_value: '',
     purchase_date: new Date().toISOString().slice(0, 10),
     expiry_date: '',
   });
 
-  const load = async () => {
-    setLoading(true);
-    const [prods, purch] = await Promise.all([
-      getProducts(),
-      getPurchases({ fromDate: fromDate || undefined, toDate: toDate || undefined }),
-    ]);
-    setProducts(prods || []);
-    setPurchases(purch || []);
-    setLoading(false);
+  const totalVal = Number(form.total_value) || 0;
+  const qty = Number(form.quantity) || 1;
+  const salePriceAuto = qty > 0 ? (totalVal / qty).toFixed(2) : '';
+
+  const loadPurchases = async () => {
+    const list = await getPurchases({});
+    setPurchases(list || []);
   };
 
   useEffect(() => {
-    load();
+    loadPurchases();
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.product_id || !form.quantity || Number(form.total_value) <= 0) return;
+    const name = form.product_name.trim();
+    if (!name || !form.quantity || Number(form.total_value) <= 0) return;
+    let productId;
+    const products = await getProducts();
+    const product = products.find((p) => (p.name || '').trim().toLowerCase() === name.toLowerCase());
+    if (product) {
+      productId = product.id;
+    } else {
+      const salePriceNum = qty > 0 ? totalVal / qty : 0;
+      productId = await addProduct({
+        name,
+        quantity: 0,
+        purchase_price: salePriceNum,
+        sale_price: salePriceNum,
+        stock_entry_date: form.purchase_date,
+        expiry_date: form.expiry_date || null,
+      });
+      if (!productId) {
+        alert('Could not create product.');
+        return;
+      }
+    }
+    const salePrice = qty > 0 ? totalVal / qty : undefined;
     await addPurchase({
-      product_id: Number(form.product_id),
+      product_id: productId,
       quantity: Number(form.quantity),
       total_value: Number(form.total_value),
+      sale_price: salePrice,
       purchase_date: form.purchase_date,
+      expiry_date: form.expiry_date || undefined,
     });
     setForm({
-      product_id: '',
+      product_name: '',
       quantity: 1,
       total_value: '',
       purchase_date: new Date().toISOString().slice(0, 10),
+      expiry_date: '',
     });
-    load();
+    loadPurchases();
   };
-
-  const totalValue = purchases.reduce((s, p) => s + Number(p.total_value), 0);
-  const totalQty = purchases.reduce((s, p) => s + Number(p.quantity), 0);
 
   return (
     <div className="purchases-page">
@@ -61,17 +82,14 @@ export default function Purchases() {
         <h2>Add purchase</h2>
         <div className="form-row">
           <div className="form-group">
-            <label>Product</label>
-            <select
-              value={form.product_id}
-              onChange={(e) => setForm((f) => ({ ...f, product_id: e.target.value }))}
+            <label>Name</label>
+            <input
+              type="text"
+              value={form.product_name}
+              onChange={(e) => setForm((f) => ({ ...f, product_name: e.target.value }))}
+              placeholder="Enter product name"
               required
-            >
-              <option value="">Select product</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
+            />
           </div>
           <div className="form-group">
             <label>Quantity</label>
@@ -85,7 +103,7 @@ export default function Purchases() {
             </select>
           </div>
           <div className="form-group">
-            <label>Total value (₹)</label>
+            <label>Total value</label>
             <input
               type="number"
               min="0"
@@ -93,6 +111,15 @@ export default function Purchases() {
               value={form.total_value}
               onChange={(e) => setForm((f) => ({ ...f, total_value: e.target.value }))}
               required
+            />
+          </div>
+          <div className="form-group">
+            <label>Sale price for single quantity</label>
+            <input
+              type="text"
+              value={salePriceAuto}
+              readOnly
+              placeholder="Total value ÷ Quantity"
             />
           </div>
           <div className="form-group">
@@ -117,53 +144,41 @@ export default function Purchases() {
           </div>
         </div>
       </form>
-      <div className="filters card form-row">
-        <div className="form-group">
-          <label>From date</label>
-          <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-        </div>
-        <div className="form-group">
-          <label>To date</label>
-          <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
-        </div>
-        <div className="form-group">
-          <button type="button" className="btn btn-primary" onClick={load}>Apply</button>
-        </div>
-      </div>
-      <div className="summary card">
-        <strong>Total quantity purchased:</strong> {totalQty} &nbsp;|&nbsp;
-        <strong>Total purchase value:</strong> ₹{totalValue.toFixed(2)}
-      </div>
-      <div className="card">
-        <h2>Purchase records</h2>
-        {loading ? (
-          <p>Loading…</p>
-        ) : purchases.length === 0 ? (
-          <p>No purchases in this period.</p>
-        ) : (
+
+      <div className="card purchases-list">
+        <h2>All purchases</h2>
+        <div className="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>ID</th>
                 <th>Product</th>
                 <th>Quantity</th>
                 <th>Total value</th>
-                <th>Date</th>
+                <th>Sale price (unit)</th>
+                <th>Purchase date</th>
+                <th>Expiry date</th>
               </tr>
             </thead>
             <tbody>
-              {purchases.map((p) => (
-                <tr key={p.id}>
-                  <td>{p.id}</td>
-                  <td>{p.product_name}</td>
-                  <td>{p.quantity}</td>
-                  <td>₹{Number(p.total_value).toFixed(2)}</td>
-                  <td>{p.purchase_date.slice(0, 10)}</td>
+              {purchases.length === 0 ? (
+                <tr>
+                  <td colSpan={6}>No purchases yet. Add one above.</td>
                 </tr>
-              ))}
+              ) : (
+                purchases.map((p) => (
+                  <tr key={p.id}>
+                    <td>{p.product_name ?? '—'}</td>
+                    <td>{p.quantity}</td>
+                    <td>{Number(p.total_value).toFixed(2)}</td>
+                    <td>{p.sale_price != null ? Number(p.sale_price).toFixed(2) : '—'}</td>
+                    <td>{formatDate(p.purchase_date)}</td>
+                    <td>{formatDate(p.expiry_date)}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
-        )}
+        </div>
       </div>
     </div>
   );

@@ -16,8 +16,8 @@ function Layout({ children, onLogout }) {
           <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>
             Bill
           </NavLink>
-          <NavLink to="/products" className={({ isActive }) => (isActive ? 'active' : '')}>
-            Products
+          <NavLink to="/stock" className={({ isActive }) => (isActive ? 'active' : '')}>
+            Stock
           </NavLink>
           <NavLink to="/sales" className={({ isActive }) => (isActive ? 'active' : '')}>
             Sales
@@ -56,7 +56,7 @@ export default function App() {
       <Layout onLogout={handleLogout}>
         <Routes>
           <Route path="/" element={<Bill />} />
-          <Route path="/products" element={<Products />} />
+          <Route path="/stock" element={<Products />} />
           <Route path="/sales" element={<Sales />} />
           <Route path="/purchases" element={<Purchases />} />
         </Routes>

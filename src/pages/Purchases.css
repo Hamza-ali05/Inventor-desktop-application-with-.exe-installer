@@ -2,3 +2,16 @@
   margin-top: 0;
   margin-bottom: 1rem;
 }
+
+.purchases-list {
+  margin-top: 1.5rem;
+}
+
+.purchases-list h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.purchases-list .table-wrap {
+  overflow-x: auto;
+}

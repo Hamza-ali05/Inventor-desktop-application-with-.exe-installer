@@ -70,8 +70,8 @@ export default function Sales() {
       </div>
       <div className="summary card">
         <strong>Total quantity sold:</strong> {totalQty} &nbsp;|&nbsp;
-        <strong>Total revenue:</strong> ₹{totalRevenue.toFixed(2)} &nbsp;|&nbsp;
-        <strong>Total profit:</strong> ₹{totalProfit.toFixed(2)}
+        <strong>Total revenue:</strong> {totalRevenue.toFixed(2)} &nbsp;|&nbsp;
+        <strong>Total profit:</strong> {totalProfit.toFixed(2)}
       </div>
       <div className="card">
         <h2>Sales by bill</h2>
@@ -84,9 +84,9 @@ export default function Sales() {
             {billList.map(([billId, bill]) => (
               <div key={billId} className="bill-block">
                 <div className="bill-header">
-                  Bill #{billId} — {bill.date} — {bill.method} — Total: ₹{Number(bill.total).toFixed(2)}
+                  Bill #{billId} — {bill.date} — {bill.method} — Total: {Number(bill.total).toFixed(2)}
                   {bill.method === 'credit' && Number(bill.credit_remaining) > 0 && (
-                    <span className="credit-badge"> Credit remaining: ₹{Number(bill.credit_remaining).toFixed(2)}</span>
+                    <span className="credit-badge"> Credit remaining: {Number(bill.credit_remaining).toFixed(2)}</span>
                   )}
                 </div>
                 <table>
@@ -104,9 +104,9 @@ export default function Sales() {
                       <tr key={i}>
                         <td>{item.product_name}</td>
                         <td>{item.quantity}</td>
-                        <td>₹{Number(item.unit_price).toFixed(2)}</td>
-                        <td>₹{Number(item.line_total).toFixed(2)}</td>
-                        <td>₹{Number(item.profit).toFixed(2)}</td>
+                        <td>{Number(item.unit_price).toFixed(2)}</td>
+                        <td>{Number(item.line_total).toFixed(2)}</td>
+                        <td>{Number(item.profit).toFixed(2)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -135,9 +135,9 @@ export default function Sales() {
                 <tr key={b.id}>
                   <td>{b.id}</td>
                   <td>{b.bill_date}</td>
-                  <td>₹{Number(b.total).toFixed(2)}</td>
-                  <td>₹{Number(b.amount_paid).toFixed(2)}</td>
-                  <td>₹{Number(b.credit_remaining).toFixed(2)}</td>
+                  <td>{Number(b.total).toFixed(2)}</td>
+                  <td>{Number(b.amount_paid).toFixed(2)}</td>
+                  <td>{Number(b.credit_remaining).toFixed(2)}</td>
                   <td>
                     <button type="button" className="btn btn-primary btn-sm" onClick={() => setCreditModal(b)}>
                       Pay
@@ -153,7 +153,7 @@ export default function Sales() {
         <div className="modal-overlay" onClick={() => setCreditModal(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>Pay credit — Bill #{creditModal.id}</h3>
-            <p>Remaining: ₹{Number(creditModal.credit_remaining).toFixed(2)}</p>
+            <p>Remaining: {Number(creditModal.credit_remaining).toFixed(2)}</p>
             <div className="form-group">
               <label>Amount</label>
               <input

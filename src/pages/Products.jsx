@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getProductsFromPurchases } from '../api';
+import { getStockWithQuantity } from '../api';
 import './Products.css';
 
 export default function Products() {
@@ -8,7 +8,7 @@ export default function Products() {
 
   const load = async () => {
     setLoading(true);
-    const list = await getProductsFromPurchases();
+    const list = await getStockWithQuantity();
     setProducts(list || []);
     setLoading(false);
   };
@@ -20,19 +20,18 @@ export default function Products() {
   return (
     <div className="products-page">
       <div className="card products-table-card">
-        <h2>Products ({products.length})</h2>
-        <p className="products-hint">Only products added through the Purchase page are listed here.</p>
+        <h2>Stock ({products.length})</h2>
         {loading ? (
           <p>Loading…</p>
         ) : products.length === 0 ? (
-          <p>No products yet. Add a purchase on the Purchases page to see products here.</p>
+          <p>No stock yet. Add a purchase on the Purchases page to see stock here.</p>
         ) : (
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>Name</th>
+                  <th>Product</th>
                   <th>Quantity</th>
                   <th>Purchase price</th>
                   <th>Sale price</th>
@@ -44,7 +43,7 @@ export default function Products() {
                 {products.map((p) => (
                   <tr key={p.id}>
                     <td>{p.id}</td>
-                    <td>{p.name}</td>
+                    <td>{p.name ?? '—'}</td>
                     <td>{p.quantity}</td>
                     <td>{Number(p.purchase_price).toFixed(2)}</td>
                     <td>{Number(p.sale_price).toFixed(2)}</td>

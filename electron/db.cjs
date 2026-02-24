@@ -9,7 +9,8 @@ function getDbPath() {
 
 let db = null;
 
-const SEED_PRODUCTS = [
+// One-time migration: remove previously seeded products and their purchases from DB.
+const REMOVE_SEED_PRODUCT_NAMES = [
   'Coca Cola 2 Liter', 'Coca Cola 1.5 Liter', 'Coca Cola 1 Liter', 'Coca Cola 500 ml', 'Coca Cola 330 ml Can', 'Coca Cola 250 ml', 'Coca Cola NR (Normal Returnable Glass Bottle)', 'Coca Cola Diet 500 ml', 'Coca Cola Diet 1.5 Liter', 'Coca Cola Zero 500 ml',
   'Pepsi 2 Liter', 'Pepsi 1.5 Liter', 'Pepsi 1 Liter', 'Pepsi 500 ml', 'Pepsi 330 ml Can', 'Pepsi 250 ml', 'Pepsi NR', 'Pepsi Black 500 ml', 'Pepsi Black 1.5 Liter',
   '7UP 2 Liter', '7UP 1.5 Liter', '7UP 1 Liter', '7UP 500 ml', '7UP 250 ml', '7UP NR', '7UP Diet 500 ml', '7UP Can',
@@ -37,61 +38,22 @@ const SEED_PRODUCTS = [
   'Aqua Green Water 1.5 Liter', 'Aqua Green Water 500 ml', 'Aqua Green Water 250 ml',
 ];
 
-function defaultPrice(name) {
-  const n = name.toLowerCase();
-  if (n.includes('2 liter') || n.includes('2 l')) return { purchase: 220, sale: 260 };
-  if (n.includes('1.5 liter') || n.includes('1.5 l')) return { purchase: 180, sale: 210 };
-  if (n.includes('1 liter') || n.includes('1 l')) return { purchase: 140, sale: 170 };
-  if (n.includes('500 ml')) return { purchase: 80, sale: 95 };
-  if (n.includes('330') || n.includes('can')) return { purchase: 60, sale: 75 };
-  if (n.includes('250 ml')) return { purchase: 45, sale: 55 };
-  if (n.includes('200 ml')) return { purchase: 40, sale: 50 };
-  if (n.includes('nr')) return { purchase: 55, sale: 65 };
-  return { purchase: 80, sale: 100 };
+function runOneTimeMigrations(database) {
+  database.exec('CREATE TABLE IF NOT EXISTS one_time_migrations (name TEXT PRIMARY KEY)');
+  const done = database.prepare('SELECT 1 FROM one_time_migrations WHERE name = ?').get('removed_seed_products');
+  if (done) return;
+  const placeholders = REMOVE_SEED_PRODUCT_NAMES.map(() => '?').join(',');
+  database.prepare(`DELETE FROM purchases WHERE product_id IN (SELECT id FROM products WHERE name IN (${placeholders}))`).run(...REMOVE_SEED_PRODUCT_NAMES);
+  database.prepare(`DELETE FROM products WHERE name IN (${placeholders})`).run(...REMOVE_SEED_PRODUCT_NAMES);
+  database.prepare('INSERT INTO one_time_migrations (name) VALUES (?)').run('removed_seed_products');
 }
 
-function seedIfEmpty(database) {
-  const count = database.prepare('SELECT COUNT(*) as c FROM products').get();
-  if (count.c > 0) return;
-  const stmt = database.prepare(
-    'INSERT INTO products (name, quantity, purchase_price, sale_price, stock_entry_date, expiry_date) VALUES (?, ?, ?, ?, ?, ?)'
-  );
-  const today = new Date().toISOString().slice(0, 10);
-  for (const name of SEED_PRODUCTS) {
-    const { purchase, sale } = defaultPrice(name);
-    const result = stmt.run(name, 0, purchase, sale, today, null);
-    addPurchase({
-      product_id: result.lastInsertRowid,
-      quantity: 200,
-      total_value: 200 * purchase,
-      purchase_date: today,
-    });
-  }
+function seedIfEmpty(_database) {
+  // No longer seeding any default products.
 }
 
 function seedDefaultProducts() {
-  const database = getDb();
-  const today = new Date().toISOString().slice(0, 10);
-  const existing = database.prepare('SELECT name FROM products').all();
-  const existingNames = new Set(existing.map((r) => r.name));
-  const stmt = database.prepare(
-    'INSERT INTO products (name, quantity, purchase_price, sale_price, stock_entry_date, expiry_date) VALUES (?, ?, ?, ?, ?, ?)'
-  );
-  let added = 0;
-  for (const name of SEED_PRODUCTS) {
-    if (existingNames.has(name)) continue;
-    const { purchase, sale } = defaultPrice(name);
-    const result = stmt.run(name, 0, purchase, sale, today, null);
-    addPurchase({
-      product_id: result.lastInsertRowid,
-      quantity: 200,
-      total_value: 200 * purchase,
-      purchase_date: today,
-    });
-    existingNames.add(name);
-    added++;
-  }
-  return added;
+  return 0;
 }
 
 function getDb() {
@@ -99,6 +61,7 @@ function getDb() {
     db = new Database(getDbPath());
     db.pragma('journal_mode = WAL');
     initTables(db);
+    runOneTimeMigrations(db);
     seedIfEmpty(db);
   }
   return db;
@@ -140,6 +103,8 @@ function initTables(database) {
       quantity INTEGER NOT NULL,
       total_value REAL NOT NULL,
       purchase_date TEXT NOT NULL,
+      expiry_date TEXT,
+      sale_price REAL,
       FOREIGN KEY (product_id) REFERENCES products(id)
     );
     CREATE TABLE IF NOT EXISTS credit_payments (
@@ -154,7 +119,16 @@ function initTables(database) {
     const info = database.prepare('PRAGMA table_info(products)').all();
     if (!info.some((c) => c.name === 'expiry_date')) {
       database.exec('ALTER TABLE products ADD COLUMN expiry_date TEXT');
-      database.exec("UPDATE products SET expiry_date = date(stock_entry_date, '+1 year') WHERE stock_entry_date IS NOT NULL AND stock_entry_date != ''");
+      database.exec("UPDATE products SET expiry_date = date(stock_entry_date, '+1 month') WHERE stock_entry_date IS NOT NULL AND stock_entry_date != ''");
+    }
+  } catch (_) {}
+  try {
+    const purInfo = database.prepare('PRAGMA table_info(purchases)').all();
+    if (!purInfo.some((c) => c.name === 'expiry_date')) {
+      database.exec('ALTER TABLE purchases ADD COLUMN expiry_date TEXT');
+    }
+    if (!purInfo.some((c) => c.name === 'sale_price')) {
+      database.exec('ALTER TABLE purchases ADD COLUMN sale_price REAL');
     }
   } catch (_) {}
 }
@@ -169,6 +143,22 @@ function getProductsFromPurchases() {
     `SELECT DISTINCT p.* FROM products p
      INNER JOIN purchases pur ON pur.product_id = p.id
      ORDER BY p.name`
+  ).all();
+}
+
+function getStockWithQuantity() {
+  return getDb().prepare(
+    `SELECT COALESCE(p.id, pur.product_id) AS id,
+            COALESCE(p.name, 'Product #' || pur.product_id) AS name,
+            COALESCE(p.purchase_price, 0) AS purchase_price,
+            COALESCE(p.sale_price, 0) AS sale_price,
+            p.stock_entry_date,
+            p.expiry_date,
+            (COALESCE(pur.total_purchased, 0) - COALESCE(sale.total_sold, 0)) AS quantity
+     FROM (SELECT product_id, SUM(quantity) AS total_purchased FROM purchases GROUP BY product_id) pur
+     LEFT JOIN products p ON p.id = pur.product_id
+     LEFT JOIN (SELECT product_id, SUM(quantity) AS total_sold FROM bill_items GROUP BY product_id) sale ON sale.product_id = pur.product_id
+     ORDER BY COALESCE(p.name, 'Product #' || pur.product_id)`
   ).all();
 }
 
@@ -290,17 +280,26 @@ function getPurchases(filters = {}) {
   return getDb().prepare(sql).all(...params);
 }
 
-function addPurchase({ product_id, quantity, total_value, purchase_date, expiry_date }) {
+function addPurchase({ product_id, quantity, total_value, purchase_date, expiry_date, sale_price }) {
   const db = getDb();
   const insertPurchase = db.prepare(
-    'INSERT INTO purchases (product_id, quantity, total_value, purchase_date) VALUES (?, ?, ?, ?)'
+    'INSERT INTO purchases (product_id, quantity, total_value, purchase_date, expiry_date, sale_price) VALUES (?, ?, ?, ?, ?, ?)'
   );
   const updateStock = db.prepare('UPDATE products SET quantity = quantity + ? WHERE id = ?');
   const updateExpiry = db.prepare('UPDATE products SET expiry_date = ? WHERE id = ?');
+  const updateProductSalePrice = db.prepare('UPDATE products SET sale_price = ? WHERE id = ?');
+  let expiryToSet = expiry_date || null;
+  if (!expiryToSet && purchase_date) {
+    const d = new Date(purchase_date + 'T12:00:00');
+    d.setMonth(d.getMonth() + 1);
+    expiryToSet = d.toISOString().slice(0, 10);
+  }
+  const salePriceNum = sale_price != null && sale_price !== '' ? Number(sale_price) : null;
   const run = db.transaction(() => {
-    insertPurchase.run(product_id, quantity, total_value, purchase_date);
+    insertPurchase.run(product_id, quantity, total_value, purchase_date, expiryToSet, salePriceNum);
     updateStock.run(quantity, product_id);
-    if (expiry_date) updateExpiry.run(expiry_date, product_id);
+    if (expiryToSet) updateExpiry.run(expiryToSet, product_id);
+    if (salePriceNum != null && !isNaN(salePriceNum)) updateProductSalePrice.run(salePriceNum, product_id);
   });
   run();
   return getDb().prepare('SELECT last_insert_rowid() as id').get().id;
@@ -329,6 +328,7 @@ function getCreditPayments(billId) {
 module.exports = {
   getProducts,
   getProductsFromPurchases,
+  getStockWithQuantity,
   addProduct,
   updateProduct,
   deleteProduct,
