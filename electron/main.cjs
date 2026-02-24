@@ -67,7 +67,9 @@ ipcMain.handle('db:getCreditPayments', (_, billId) => db.getCreditPayments(billI
 
 ipcMain.on('bill:print', () => {
   const win = BrowserWindow.getAllWindows()[0];
-  if (win && !win.isDestroyed()) win.webContents.print({ silent: false });
+  if (win && !win.isDestroyed()) {
+    win.webContents.print({ silent: false, printBackground: true });
+  }
 });
 
 app.whenReady().then(createWindow);

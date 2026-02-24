@@ -303,7 +303,7 @@ export default function Purchases() {
           <div className="purchases-filter">
             <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="purchases-filter-date" aria-label="From date" />
             <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="purchases-filter-date" aria-label="To date" />
-            <button type="button" className="btn btn-primary btn-sm" onClick={applyFilter}>Apply filter</button>
+            <button type="button" className="btn btn-primary btn-sm" onClick={applyFilter}>Check</button>
           </div>
         </div>
         <div className="table-wrap">

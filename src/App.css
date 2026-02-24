@@ -189,6 +189,24 @@ tr:hover td {
   margin: 0 0 0.25rem;
   color: var(--fg);
 }
+.receipt-contact {
+  font-size: 0.75rem;
+  margin: 0 0 0.15rem;
+  color: var(--fg);
+}
+.receipt-title {
+  font-size: 1rem;
+  margin: 0.5rem 0 0.25rem;
+}
+.receipt-date {
+  font-size: 0.85rem;
+  margin: 0 0 0.5rem;
+}
+.receipt-footer {
+  font-size: 0.7rem;
+  margin-top: 1rem;
+  color: var(--fg-muted, #666);
+}
 @media print {
   .nav, .no-print, button, .form-row, .modal-overlay {
     display: none !important;
@@ -199,6 +217,10 @@ tr:hover td {
   .main { padding: 0; }
   .bill-receipt .receipt-shop-name {
     font-size: 1.25rem;
+  }
+  .bill-receipt .receipt-contact,
+  .bill-receipt .receipt-footer {
+    font-size: 0.7rem;
   }
 }
 

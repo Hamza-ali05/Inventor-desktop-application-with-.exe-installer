@@ -5,19 +5,14 @@ import './Sales.css';
 export default function Sales() {
   const [sales, setSales] = useState([]);
   const [creditBills, setCreditBills] = useState([]);
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
   const [loading, setLoading] = useState(true);
   const [creditModal, setCreditModal] = useState(null);
   const [payAmount, setPayAmount] = useState('');
 
   const load = async () => {
     setLoading(true);
-    const filters = {};
-    if (fromDate) filters.fromDate = fromDate;
-    if (toDate) filters.toDate = toDate;
     const [summary, credit] = await Promise.all([
-      getSalesSummary(filters),
+      getSalesSummary({}),
       getBillsWithCredit(),
     ]);
     setSales(summary || []);
@@ -38,82 +33,50 @@ export default function Sales() {
     load();
   };
 
-  const byBill = sales.reduce((acc, row) => {
-    const id = row.bill_id;
-    if (!acc[id]) acc[id] = { date: row.bill_date, method: row.payment_method, total: row.total, amount_paid: row.amount_paid, credit_remaining: row.credit_remaining, items: [] };
-    acc[id].items.push(row);
-    return acc;
-  }, {});
-  const billList = Object.entries(byBill);
-  const totalRevenue = billList.reduce((s, [, b]) => s + (b.total || 0), 0);
-  const totalProfit = billList.reduce((s, [, b]) => {
-    const itemsProfit = (b.items || []).reduce((sp, i) => sp + (Number(i.profit) || 0), 0);
-    return s + itemsProfit;
-  }, 0);
+  const totalRevenue = sales.reduce((s, r) => s + (Number(r.line_total) || 0), 0);
+  const totalProfit = sales.reduce((s, r) => s + (Number(r.profit) || 0), 0);
   const totalQty = sales.reduce((s, r) => s + (r.quantity || 0), 0);
 
   return (
     <div className="sales-page">
       <h1 className="page-title">Sales</h1>
-      <div className="filters card form-row">
-        <div className="form-group">
-          <label>From date</label>
-          <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-        </div>
-        <div className="form-group">
-          <label>To date</label>
-          <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
-        </div>
-        <div className="form-group">
-          <button type="button" className="btn btn-primary" onClick={load}>Apply</button>
-        </div>
-      </div>
       <div className="summary card">
         <strong>Total quantity sold:</strong> {totalQty} &nbsp;|&nbsp;
         <strong>Total revenue:</strong> {totalRevenue.toFixed(2)} &nbsp;|&nbsp;
         <strong>Total profit:</strong> {totalProfit.toFixed(2)}
       </div>
       <div className="card">
-        <h2>Sales by bill</h2>
         {loading ? (
           <p>Loading…</p>
-        ) : billList.length === 0 ? (
-          <p>No sales in this period.</p>
+        ) : sales.length === 0 ? (
+          <p>No sales yet.</p>
         ) : (
-          <>
-            {billList.map(([billId, bill]) => (
-              <div key={billId} className="bill-block">
-                <div className="bill-header">
-                  Bill #{billId} — {bill.date} — {bill.method} — Total: {Number(bill.total).toFixed(2)}
-                  {bill.method === 'credit' && Number(bill.credit_remaining) > 0 && (
-                    <span className="credit-badge"> Credit remaining: {Number(bill.credit_remaining).toFixed(2)}</span>
-                  )}
-                </div>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Product</th>
-                      <th>Qty</th>
-                      <th>Unit price</th>
-                      <th>Line total</th>
-                      <th>Profit</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(bill.items || []).map((item, i) => (
-                      <tr key={i}>
-                        <td>{item.product_name}</td>
-                        <td>{item.quantity}</td>
-                        <td>{Number(item.unit_price).toFixed(2)}</td>
-                        <td>{Number(item.line_total).toFixed(2)}</td>
-                        <td>{Number(item.profit).toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ))}
-          </>
+          <div className="sales-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Bill No</th>
+                  <th>Product</th>
+                  <th>Qty</th>
+                  <th>Unit price</th>
+                  <th>Line total</th>
+                  <th>Profit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sales.map((row, i) => (
+                  <tr key={`${row.bill_id}-${row.product_id}-${i}`}>
+                    <td>{row.bill_id}</td>
+                    <td>{row.product_name}</td>
+                    <td>{row.quantity}</td>
+                    <td>{Number(row.unit_price).toFixed(2)}</td>
+                    <td>{Number(row.line_total).toFixed(2)}</td>
+                    <td>{Number(row.profit).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
       {creditBills.length > 0 && (
