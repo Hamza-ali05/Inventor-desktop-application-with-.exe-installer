@@ -55,6 +55,7 @@ ipcMain.handle('db:getBillItems', (_, billId) => db.getBillItems(billId));
 ipcMain.handle('db:getSalesSummary', (_, filters) => db.getSalesSummary(filters || {}));
 
 ipcMain.handle('db:getPurchases', (_, filters) => db.getPurchases(filters || {}));
+ipcMain.handle('db:getPurchasesCount', (_, filters) => db.getPurchasesCount(filters || {}));
 ipcMain.handle('db:getPurchaseById', (_, id) => db.getPurchaseById(id));
 ipcMain.handle('db:addPurchase', (_, data) => db.addPurchase(data));
 ipcMain.handle('db:updatePurchase', (_, id, data) => db.updatePurchase(id, data));

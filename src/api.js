@@ -45,6 +45,9 @@ export async function getSalesSummary(filters) {
 export async function getPurchases(filters) {
   return api.getPurchases ? api.getPurchases(filters) : [];
 }
+export async function getPurchasesCount(filters) {
+  return api.getPurchasesCount ? api.getPurchasesCount(filters) : 0;
+}
 export async function getPurchaseById(id) {
   return api.getPurchaseById ? api.getPurchaseById(id) : null;
 }

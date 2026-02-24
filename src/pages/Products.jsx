@@ -30,7 +30,7 @@ export default function Products() {
             <table>
               <thead>
                 <tr>
-                  <th>ID</th>
+                  <th>No</th>
                   <th>Product</th>
                   <th>Quantity</th>
                   <th>Purchase price</th>
@@ -39,9 +39,9 @@ export default function Products() {
                 </tr>
               </thead>
               <tbody>
-                {products.map((p) => (
+                {products.map((p, index) => (
                   <tr key={p.id}>
-                    <td>{p.id}</td>
+                    <td>{index + 1}</td>
                     <td>{p.name ?? '—'}</td>
                     <td>{p.quantity}</td>
                     <td>{Number(p.purchase_price).toFixed(2)}</td>

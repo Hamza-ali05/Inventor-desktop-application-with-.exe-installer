@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getProducts, getProductsFromPurchases, addPurchase, addProduct, getPurchases, getPurchaseById, updatePurchase, deletePurchase } from '../api';
+import { getProducts, getProductsFromPurchases, addPurchase, addProduct, getPurchases, getPurchasesCount, getPurchaseById, updatePurchase, deletePurchase } from '../api';
 import './Purchases.css';
 
 const QUANTITY_OPTIONS = Array.from({ length: 1000 }, (_, i) => i + 1);
@@ -20,7 +20,12 @@ const INITIAL_FORM = {
 };
 
 export default function Purchases() {
+  const PAGE_SIZE = 10;
   const [purchases, setPurchases] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
   const [existingProducts, setExistingProducts] = useState([]);
   const [addMode, setAddMode] = useState(null);
   const [editingPurchaseId, setEditingPurchaseId] = useState(null);
@@ -30,13 +35,40 @@ export default function Purchases() {
   const qty = Number(form.quantity) || 1;
   const singlePurchasePrice = qty > 0 ? (totalVal / qty).toFixed(2) : '';
 
-  const loadPurchases = async () => {
-    const list = await getPurchases({});
+  const filters = { fromDate: fromDate || undefined, toDate: toDate || undefined };
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+
+  const loadPurchases = async (pageNum) => {
+    const p = pageNum ?? page;
+    const f = { ...filters, limit: PAGE_SIZE, offset: (p - 1) * PAGE_SIZE };
+    const [list, count] = await Promise.all([getPurchases(f), getPurchasesCount(filters)]);
     setPurchases(list || []);
+    setTotalCount(count || 0);
+  };
+
+  const applyFilter = () => {
+    setPage(1);
+    loadPurchases(1);
+  };
+
+  const goPrev = () => {
+    if (currentPage <= 1) return;
+    const prevPage = currentPage - 1;
+    setPage(prevPage);
+    loadPurchases(prevPage);
+  };
+
+  const goNext = () => {
+    if (currentPage >= totalPages) return;
+    const nextPage = currentPage + 1;
+    setPage(nextPage);
+    loadPurchases(nextPage);
   };
 
   useEffect(() => {
-    loadPurchases();
+    setPage(1);
+    loadPurchases(1);
   }, []);
 
   const openNewPurchase = () => {
@@ -47,7 +79,7 @@ export default function Purchases() {
   const openExistingItem = async () => {
     const products = await getProductsFromPurchases();
     setExistingProducts(products || []);
-    setForm({ ...INITIAL_FORM, product_id: products?.length ? String(products[0].id) : '' });
+    setForm({ ...INITIAL_FORM, product_id: '' });
     setAddMode('existing');
   };
 
@@ -100,8 +132,8 @@ export default function Purchases() {
       ...INITIAL_FORM,
       purchase_date: new Date().toISOString().slice(0, 10),
     });
-    if (addMode === 'existing' && existingProducts.length) {
-      setForm((f) => ({ ...f, product_id: String(existingProducts[0].id) }));
+    if (addMode === 'existing') {
+      setForm((f) => ({ ...f, product_id: '' }));
     }
   };
 
@@ -190,7 +222,7 @@ export default function Purchases() {
                   onChange={(e) => setForm((f) => ({ ...f, product_id: e.target.value }))}
                   required
                 >
-                  <option value="">Select product</option>
+                  <option value="">Select One</option>
                   {existingProducts.map((p) => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
@@ -266,7 +298,14 @@ export default function Purchases() {
       )}
 
       <div className="card purchases-list">
-        <h2>All purchases</h2>
+        <div className="purchases-list-header">
+          <h2>All purchases</h2>
+          <div className="purchases-filter">
+            <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="purchases-filter-date" aria-label="From date" />
+            <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="purchases-filter-date" aria-label="To date" />
+            <button type="button" className="btn btn-primary btn-sm" onClick={applyFilter}>Apply filter</button>
+          </div>
+        </div>
         <div className="table-wrap">
           <table>
             <thead>
@@ -306,6 +345,19 @@ export default function Purchases() {
             </tbody>
           </table>
         </div>
+        {totalCount > 0 && (
+          <div className="purchases-pagination">
+            <button type="button" className="btn btn-secondary btn-sm" onClick={goPrev} disabled={currentPage <= 1}>
+              Previous
+            </button>
+            <span className="purchases-page-info">
+              Page {currentPage} of {totalPages} ({totalCount} record{totalCount !== 1 ? 's' : ''})
+            </span>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={goNext} disabled={currentPage >= totalPages}>
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

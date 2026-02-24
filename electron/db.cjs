@@ -278,7 +278,28 @@ function getPurchases(filters = {}) {
     params.push(filters.toDate);
   }
   sql += ' ORDER BY pur.purchase_date DESC';
+  const limit = Math.max(1, Math.min(1000, Number(filters.limit) || 10));
+  const offset = Math.max(0, Number(filters.offset) || 0);
+  sql += ` LIMIT ${limit} OFFSET ${offset}`;
   return getDb().prepare(sql).all(...params);
+}
+
+function getPurchasesCount(filters = {}) {
+  let sql = `
+    SELECT COUNT(*) as total FROM purchases pur
+    JOIN products p ON p.id = pur.product_id WHERE 1=1
+  `;
+  const params = [];
+  if (filters.fromDate) {
+    sql += ' AND date(purchase_date) >= date(?)';
+    params.push(filters.fromDate);
+  }
+  if (filters.toDate) {
+    sql += ' AND date(purchase_date) <= date(?)';
+    params.push(filters.toDate);
+  }
+  const row = getDb().prepare(sql).get(...params);
+  return row ? row.total : 0;
 }
 
 function getPurchaseById(id) {
@@ -405,6 +426,7 @@ module.exports = {
   getBillItems,
   getSalesSummary,
   getPurchases,
+  getPurchasesCount,
   getPurchaseById,
   addPurchase,
   updatePurchase,
