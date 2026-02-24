@@ -1,5 +1,6 @@
 const Database = require('better-sqlite3');
 const path = require('path');
+const fs = require('fs');
 const { app } = require('electron');
 
 function getDbPath() {
@@ -280,6 +281,59 @@ function getPurchases(filters = {}) {
   return getDb().prepare(sql).all(...params);
 }
 
+function getPurchaseById(id) {
+  return getDb().prepare(
+    `SELECT pur.*, p.name as product_name FROM purchases pur
+     JOIN products p ON p.id = pur.product_id WHERE pur.id = ?`
+  ).get(id);
+}
+
+function deletePurchase(id) {
+  const db = getDb();
+  const purchaseId = Number(id);
+  if (!Number.isInteger(purchaseId)) return;
+  const row = db.prepare('SELECT product_id, quantity FROM purchases WHERE id = ?').get(purchaseId);
+  if (!row) return;
+  const deleteStmt = db.prepare('DELETE FROM purchases WHERE id = ?');
+  const updateStock = db.prepare('UPDATE products SET quantity = MAX(0, quantity - ?) WHERE id = ?');
+  const run = db.transaction(() => {
+    deleteStmt.run(purchaseId);
+    updateStock.run(row.quantity, row.product_id);
+  });
+  run();
+}
+
+function updatePurchase(id, { quantity, total_value, sale_price, purchase_date, expiry_date }) {
+  const database = getDb();
+  const old = database.prepare('SELECT product_id, quantity FROM purchases WHERE id = ?').get(id);
+  if (!old) return;
+  const newQty = Number(quantity) || 0;
+  const oldQty = old.quantity || 0;
+  const totalValue = Number(total_value);
+  const salePriceNum = sale_price != null && sale_price !== '' ? Number(sale_price) : null;
+  let expiryToSet = expiry_date || null;
+  if (!expiryToSet && purchase_date) {
+    const d = new Date(purchase_date + 'T12:00:00');
+    d.setMonth(d.getMonth() + 1);
+    expiryToSet = d.toISOString().slice(0, 10);
+  }
+  database.transaction(() => {
+    database.prepare(
+      'UPDATE purchases SET quantity=?, total_value=?, purchase_date=?, expiry_date=?, sale_price=? WHERE id=?'
+    ).run(newQty, totalValue, purchase_date, expiryToSet, salePriceNum, id);
+    const qtyDiff = newQty - oldQty;
+    if (qtyDiff !== 0) {
+      database.prepare('UPDATE products SET quantity = quantity + ? WHERE id = ?').run(qtyDiff, old.product_id);
+    }
+    if (expiryToSet) {
+      database.prepare('UPDATE products SET expiry_date = ? WHERE id = ?').run(expiryToSet, old.product_id);
+    }
+    if (salePriceNum != null && !isNaN(salePriceNum)) {
+      database.prepare('UPDATE products SET sale_price = ? WHERE id = ?').run(salePriceNum, old.product_id);
+    }
+  })();
+}
+
 function addPurchase({ product_id, quantity, total_value, purchase_date, expiry_date, sale_price }) {
   const db = getDb();
   const insertPurchase = db.prepare(
@@ -325,6 +379,17 @@ function getCreditPayments(billId) {
   return getDb().prepare('SELECT * FROM credit_payments WHERE bill_id=? ORDER BY payment_date').all(billId);
 }
 
+function resetDatabase() {
+  if (db) {
+    db.close();
+    db = null;
+  }
+  const dbPath = getDbPath();
+  if (fs.existsSync(dbPath)) {
+    fs.unlinkSync(dbPath);
+  }
+}
+
 module.exports = {
   getProducts,
   getProductsFromPurchases,
@@ -340,8 +405,12 @@ module.exports = {
   getBillItems,
   getSalesSummary,
   getPurchases,
+  getPurchaseById,
   addPurchase,
+  updatePurchase,
+  deletePurchase,
   getBillsWithCredit,
   addCreditPayment,
   getCreditPayments,
+  resetDatabase,
 };

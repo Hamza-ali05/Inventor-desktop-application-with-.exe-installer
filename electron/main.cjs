@@ -2,6 +2,17 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const db = require('./db.cjs');
 
+if (process.argv.includes('--fresh-db')) {
+  app.whenReady().then(() => {
+    try {
+      db.resetDatabase();
+      console.log('Database reset (fresh). Restart the app to use a new DB.');
+    } catch (err) {
+      console.error('resetDatabase failed:', err);
+    }
+    app.quit();
+  });
+} else {
 function createWindow() {
   const win = new BrowserWindow({
     width: 1200,
@@ -44,7 +55,10 @@ ipcMain.handle('db:getBillItems', (_, billId) => db.getBillItems(billId));
 ipcMain.handle('db:getSalesSummary', (_, filters) => db.getSalesSummary(filters || {}));
 
 ipcMain.handle('db:getPurchases', (_, filters) => db.getPurchases(filters || {}));
+ipcMain.handle('db:getPurchaseById', (_, id) => db.getPurchaseById(id));
 ipcMain.handle('db:addPurchase', (_, data) => db.addPurchase(data));
+ipcMain.handle('db:updatePurchase', (_, id, data) => db.updatePurchase(id, data));
+ipcMain.handle('db:deletePurchase', (_, id) => db.deletePurchase(id));
 
 ipcMain.handle('db:getBillsWithCredit', () => db.getBillsWithCredit());
 ipcMain.handle('db:addCreditPayment', (_, billId, amount, paymentDate) => db.addCreditPayment(billId, amount, paymentDate));
@@ -64,3 +78,4 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
+}

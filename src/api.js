@@ -45,8 +45,17 @@ export async function getSalesSummary(filters) {
 export async function getPurchases(filters) {
   return api.getPurchases ? api.getPurchases(filters) : [];
 }
+export async function getPurchaseById(id) {
+  return api.getPurchaseById ? api.getPurchaseById(id) : null;
+}
 export async function addPurchase(data) {
   return api.addPurchase ? api.addPurchase(data) : null;
+}
+export async function updatePurchase(id, data) {
+  return api.updatePurchase ? api.updatePurchase(id, data) : undefined;
+}
+export async function deletePurchase(id) {
+  return api.deletePurchase ? api.deletePurchase(id) : undefined;
 }
 
 export async function getBillsWithCredit() {

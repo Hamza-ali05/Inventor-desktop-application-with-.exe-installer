@@ -35,7 +35,6 @@ export default function Products() {
                   <th>Quantity</th>
                   <th>Purchase price</th>
                   <th>Sale price</th>
-                  <th>Entry date</th>
                   <th>Expiry date</th>
                 </tr>
               </thead>
@@ -47,7 +46,6 @@ export default function Products() {
                     <td>{p.quantity}</td>
                     <td>{Number(p.purchase_price).toFixed(2)}</td>
                     <td>{Number(p.sale_price).toFixed(2)}</td>
-                    <td>{p.stock_entry_date ? p.stock_entry_date.slice(0, 10) : '—'}</td>
                     <td>{p.expiry_date ? p.expiry_date.slice(0, 10) : '—'}</td>
                   </tr>
                 ))}

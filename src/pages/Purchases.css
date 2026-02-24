@@ -3,6 +3,32 @@
   margin-bottom: 1rem;
 }
 
+.purchase-form-buttons .form-row-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.purchase-form-buttons .form-row-buttons .btn {
+  min-width: 10rem;
+}
+
+.purchase-form .btn-back {
+  margin-bottom: 1rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.purchase-form .btn-back:hover {
+  background: var(--accent-hover);
+}
+
 .purchases-list {
   margin-top: 1.5rem;
 }
@@ -14,4 +40,21 @@
 
 .purchases-list .table-wrap {
   overflow-x: auto;
+}
+
+.purchase-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.purchase-form .input-readonly {
+  background: var(--muted, #eee);
+  cursor: default;
+}
+
+.purchase-form .input-single-purchase-price {
+  font-weight: normal;
+  background: var(--card, #fff);
+  cursor: default;
 }

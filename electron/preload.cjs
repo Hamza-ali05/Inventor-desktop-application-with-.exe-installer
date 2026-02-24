@@ -18,7 +18,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSalesSummary: (filters) => ipcRenderer.invoke('db:getSalesSummary', filters),
 
   getPurchases: (filters) => ipcRenderer.invoke('db:getPurchases', filters),
+  getPurchaseById: (id) => ipcRenderer.invoke('db:getPurchaseById', id),
   addPurchase: (data) => ipcRenderer.invoke('db:addPurchase', data),
+  updatePurchase: (id, data) => ipcRenderer.invoke('db:updatePurchase', id, data),
+  deletePurchase: (id) => ipcRenderer.invoke('db:deletePurchase', id),
 
   getBillsWithCredit: () => ipcRenderer.invoke('db:getBillsWithCredit'),
   addCreditPayment: (billId, amount, paymentDate) => ipcRenderer.invoke('db:addCreditPayment', billId, amount, paymentDate),
