@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { getProducts, getPurchases, addPurchase } from '../api';
 import './Purchases.css';
 
+const QUANTITY_OPTIONS = Array.from({ length: 1000 }, (_, i) => i + 1);
+
 export default function Purchases() {
   const [products, setProducts] = useState([]);
   const [purchases, setPurchases] = useState([]);
@@ -13,6 +15,7 @@ export default function Purchases() {
     quantity: 1,
     total_value: '',
     purchase_date: new Date().toISOString().slice(0, 10),
+    expiry_date: '',
   });
 
   const load = async () => {
@@ -72,12 +75,14 @@ export default function Purchases() {
           </div>
           <div className="form-group">
             <label>Quantity</label>
-            <input
-              type="number"
-              min="1"
+            <select
               value={form.quantity}
-              onChange={(e) => setForm((f) => ({ ...f, quantity: e.target.value }))}
-            />
+              onChange={(e) => setForm((f) => ({ ...f, quantity: Number(e.target.value) }))}
+            >
+              {QUANTITY_OPTIONS.map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
           </div>
           <div className="form-group">
             <label>Total value (₹)</label>
@@ -91,11 +96,20 @@ export default function Purchases() {
             />
           </div>
           <div className="form-group">
-            <label>Date</label>
+            <label>Purchase date</label>
             <input
               type="date"
               value={form.purchase_date}
               onChange={(e) => setForm((f) => ({ ...f, purchase_date: e.target.value }))}
+            />
+          </div>
+          <div className="form-group">
+            <label>Expiry date</label>
+            <input
+              type="date"
+              value={form.expiry_date}
+              onChange={(e) => setForm((f) => ({ ...f, expiry_date: e.target.value }))}
+              placeholder="Optional"
             />
           </div>
           <div className="form-group">

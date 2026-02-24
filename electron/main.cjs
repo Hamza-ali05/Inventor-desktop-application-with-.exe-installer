@@ -28,10 +28,12 @@ function createWindow() {
 
 // IPC handlers
 ipcMain.handle('db:getProducts', () => db.getProducts());
+ipcMain.handle('db:getProductsFromPurchases', () => db.getProductsFromPurchases());
 ipcMain.handle('db:addProduct', (_, data) => db.addProduct(data));
 ipcMain.handle('db:updateProduct', (_, id, data) => db.updateProduct(id, data));
 ipcMain.handle('db:deleteProduct', (_, id) => db.deleteProduct(id));
 ipcMain.handle('db:getProductById', (_, id) => db.getProductById(id));
+ipcMain.handle('db:seedDefaultProducts', () => db.seedDefaultProducts());
 
 ipcMain.handle('db:createBill', (_, data) => db.createBill(data));
 ipcMain.handle('db:setBillPrinted', (_, billId) => db.setBillPrinted(billId));

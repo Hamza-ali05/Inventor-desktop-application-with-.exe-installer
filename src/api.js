@@ -3,6 +3,9 @@ const api = typeof window !== 'undefined' && window.electronAPI ? window.electro
 export async function getProducts() {
   return api.getProducts ? api.getProducts() : [];
 }
+export async function getProductsFromPurchases() {
+  return api.getProductsFromPurchases ? api.getProductsFromPurchases() : [];
+}
 export async function addProduct(data) {
   return api.addProduct ? api.addProduct(data) : null;
 }
@@ -14,6 +17,9 @@ export async function deleteProduct(id) {
 }
 export async function getProductById(id) {
   return api.getProductById ? api.getProductById(id) : null;
+}
+export async function seedDefaultProducts() {
+  return api.seedDefaultProducts ? api.seedDefaultProducts() : 0;
 }
 
 export async function createBill(data) {

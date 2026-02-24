@@ -2,10 +2,12 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
   getProducts: () => ipcRenderer.invoke('db:getProducts'),
+  getProductsFromPurchases: () => ipcRenderer.invoke('db:getProductsFromPurchases'),
   addProduct: (data) => ipcRenderer.invoke('db:addProduct', data),
   updateProduct: (id, data) => ipcRenderer.invoke('db:updateProduct', id, data),
   deleteProduct: (id) => ipcRenderer.invoke('db:deleteProduct', id),
   getProductById: (id) => ipcRenderer.invoke('db:getProductById', id),
+  seedDefaultProducts: () => ipcRenderer.invoke('db:seedDefaultProducts'),
 
   createBill: (data) => ipcRenderer.invoke('db:createBill', data),
   setBillPrinted: (billId) => ipcRenderer.invoke('db:setBillPrinted', billId),

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { getProducts, createBill, setBillPrinted, printBill } from '../api';
 import './Bill.css';
 
-const QUANTITY_OPTIONS = Array.from({ length: 200 }, (_, i) => i + 1);
+const QUANTITY_OPTIONS = Array.from({ length: 1000 }, (_, i) => i + 1);
 
 export default function Bill() {
   const [products, setProducts] = useState([]);
@@ -12,13 +13,14 @@ export default function Bill() {
   const [pendingPayment, setPendingPayment] = useState(null);
   const [printContent, setPrintContent] = useState(null);
 
+  const location = useLocation();
   const loadProducts = async () => {
     const list = await getProducts();
     setProducts(list || []);
   };
   useEffect(() => {
-    loadProducts();
-  }, []);
+    if (location.pathname === '/') loadProducts();
+  }, [location.pathname]);
 
   const addLine = () => {
     setLines((l) => [...l, { product_id: '', quantity: 1 }]);

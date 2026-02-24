@@ -5,3 +5,28 @@
   padding: 0.35rem 0.65rem;
   font-size: 0.875rem;
 }
+.products-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.products-table-header h2 {
+  margin: 0;
+}
+.products-table-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.table-wrap {
+  overflow-x: auto;
+}
+.products-hint {
+  font-size: 0.875rem;
+  color: var(--fg);
+  opacity: 0.85;
+  margin: 0 0 1rem;
+}
