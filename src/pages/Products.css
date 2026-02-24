@@ -1,0 +1,7 @@
+.product-form .form-actions {
+  flex-direction: row;
+}
+.btn-sm {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.875rem;
+}

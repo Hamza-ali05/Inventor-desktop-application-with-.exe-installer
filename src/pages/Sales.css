@@ -1,0 +1,17 @@
+.bill-block {
+  margin-bottom: 1.5rem;
+}
+.bill-block:last-child {
+  margin-bottom: 0;
+}
+.bill-header {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+.credit-badge {
+  color: #c53030;
+  margin-left: 0.5rem;
+}
+.summary {
+  margin-bottom: 1rem;
+}

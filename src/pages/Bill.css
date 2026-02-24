@@ -1,0 +1,16 @@
+.bill-item-row select {
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+.line-total {
+  min-width: 80px;
+  text-align: right;
+  font-weight: 600;
+}
+.bill-total {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
