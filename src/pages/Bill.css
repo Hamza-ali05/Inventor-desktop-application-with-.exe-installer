@@ -18,6 +18,61 @@
 .bill-qty-select {
   width: 80px;
 }
+
+.bill-payment-options {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: 0.5rem;
+}
+
+.bill-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.bill-radio-label input {
+  cursor: pointer;
+}
+
+.bill-discount-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bill-discount-input {
+  width: 5rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.bill-subtotal {
+  color: var(--fg-muted, #666);
+  font-size: 0.95rem;
+}
+
+.credit-remaining-line {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0;
+}
+
+.receipt-discount {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+}
+
+.receipt-credit-paid,
+.receipt-credit-remaining {
+  margin: 0.2rem 0 0;
+  font-size: 0.9rem;
+}
+
 .bill-items-table-wrap {
   overflow: auto;
   max-height: 360px;

@@ -7,6 +7,7 @@ import Products from './pages/Products';
 import Sales from './pages/Sales';
 import Purchase from './pages/Purchase';
 import NearExpiry from './pages/NearExpiry';
+import Credit from './pages/Credit';
 
 const iconBill = (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -44,6 +45,12 @@ const iconNearExpiry = (
     <polyline points="12 6 12 12 16 14" />
   </svg>
 );
+const iconCredit = (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+    <line x1="1" y1="10" x2="23" y2="10" />
+  </svg>
+);
 
 const sidebarLinks = [
   { to: '/', end: true, label: 'Bill', icon: iconBill },
@@ -51,6 +58,7 @@ const sidebarLinks = [
   { to: '/sales', end: false, label: 'Sales', icon: iconSales },
   { to: '/purchase', end: false, label: 'Purchase', icon: iconPurchase },
   { to: '/near-expiry', end: false, label: 'Near Expiry', icon: iconNearExpiry },
+  { to: '/credit', end: false, label: 'Credit', icon: iconCredit },
 ];
 
 function Layout({ children, onLogout }) {
@@ -102,6 +110,7 @@ export default function App() {
           <Route path="/sales" element={<Sales />} />
           <Route path="/purchase" element={<Purchase />} />
           <Route path="/near-expiry" element={<NearExpiry />} />
+          <Route path="/credit" element={<Credit />} />
         </Routes>
       </Layout>
     </HashRouter>

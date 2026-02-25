@@ -104,8 +104,8 @@ export function seedDefaultProducts() {
 export function createBill(data) {
   const id = nextId('bill');
   const billDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
-  const amountPaid = data.payment_method === 'cash' ? data.total : 0;
-  const creditRemaining = data.payment_method === 'credit' ? data.total : 0;
+  const amountPaid = data.payment_method === 'cash' ? data.total : (Number(data.amount_paid) || 0);
+  const creditRemaining = data.payment_method === 'credit' ? (Number(data.credit_remaining) ?? Math.max(0, data.total - (Number(data.amount_paid) || 0))) : 0;
   bills.push({
     id,
     bill_date: billDate,
@@ -114,6 +114,8 @@ export function createBill(data) {
     amount_paid: amountPaid,
     credit_remaining: creditRemaining,
     printed: 0,
+    customer_name: data.customer_name || null,
+    customer_mobile: data.customer_mobile || null,
   });
   // Bill items reduce stock: stock = sum(purchases) - sum(bill items)
   data.items.forEach((item) => {

@@ -1,0 +1,85 @@
+.credit-page {
+  max-width: 100%;
+}
+
+.credit-intro {
+  margin: 0 0 1rem;
+  color: var(--fg-muted, #666);
+  font-size: 0.95rem;
+}
+
+.credit-bills-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.credit-bill-card {
+  border-left: 4px solid var(--accent);
+}
+
+.credit-bill-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.credit-bill-id {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.credit-bill-date {
+  font-size: 0.9rem;
+  color: var(--fg-muted, #666);
+}
+
+.credit-bill-customer {
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+.credit-bill-items-wrap {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.credit-bill-items-table {
+  width: 100%;
+  min-width: 280px;
+}
+
+.credit-bill-items-table th,
+.credit-bill-items-table td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.credit-bill-items-table th {
+  background: var(--muted);
+  font-weight: 600;
+}
+
+.credit-bill-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0;
+}
+
+.credit-bill-totals span {
+  font-size: 1rem;
+}
+
+.credit-remaining {
+  color: #c53030;
+  font-weight: 600;
+}
+
+.credit-bill-actions {
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}

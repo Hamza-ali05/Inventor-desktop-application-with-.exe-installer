@@ -6,9 +6,13 @@ import './Bill.css';
 export default function Bill() {
   const [products, setProducts] = useState([]);
   const [lines, setLines] = useState([{ product_id: '', quantity: 1 }]);
-  const [paymentModal, setPaymentModal] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [discount, setDiscount] = useState('');
+  const [creditAmountModal, setCreditAmountModal] = useState(false);
+  const [creditCurrentAmount, setCreditCurrentAmount] = useState('');
+  const [creditCustomerName, setCreditCustomerName] = useState('');
+  const [creditCustomerMobile, setCreditCustomerMobile] = useState('');
   const [printPreviewModal, setPrintPreviewModal] = useState(false);
-  const [pendingPayment, setPendingPayment] = useState(null);
   const [printContent, setPrintContent] = useState(null);
 
   const location = useLocation();
@@ -80,25 +84,34 @@ export default function Bill() {
     if (!p) return 0;
     return (p.sale_price * (line.quantity || 0));
   };
-  const total = billItems.reduce((sum, line) => sum + getLineTotal(line), 0);
+  const subtotal = billItems.reduce((sum, line) => sum + getLineTotal(line), 0);
+  const discountNum = Math.max(0, Number(discount) || 0);
+  const total = Math.max(0, subtotal - discountNum);
   const canComplete = billItems.length > 0 && total > 0;
 
-  const openPaymentModal = () => {
+  const onCompleteBill = () => {
     if (!canComplete) return;
-    setPaymentModal(true);
-  };
-
-  const handlePaymentChoice = (method) => {
-    setPendingPayment({ method });
-    setPaymentModal(false);
-    if (method === 'cash') {
-      finishBill('cash', true);
+    if (paymentMethod === 'cash') {
+      finishBill('cash', total, 0, true);
     } else {
-      finishBill('credit', false);
+      setCreditCurrentAmount('');
+      setCreditCustomerName('');
+      setCreditCustomerMobile('');
+      setCreditAmountModal(true);
     }
   };
 
-  const finishBill = async (method, doPrint) => {
+  const confirmCreditBill = () => {
+    const current = Math.max(0, Number(creditCurrentAmount) || 0);
+    const remaining = Math.max(0, total - current);
+    finishBill('credit', total, current, true, remaining, creditCustomerName.trim(), creditCustomerMobile.trim());
+    setCreditAmountModal(false);
+    setCreditCurrentAmount('');
+    setCreditCustomerName('');
+    setCreditCustomerMobile('');
+  };
+
+  const finishBill = async (method, billTotal, amountPaid = 0, doPrint, creditRemaining, customerName = '', customerMobile = '') => {
     const items = billItems.map((l) => {
         const p = products.find((x) => x.id === Number(l.product_id));
         const q = Number(l.quantity) || 1;
@@ -106,28 +119,35 @@ export default function Bill() {
         const line_total = unit_price * q;
         return { product_id: p.id, quantity: q, unit_price, line_total, product_name: p.name };
       });
-    const billTotal = items.reduce((s, i) => s + i.line_total, 0);
     if (billTotal <= 0) return;
     try {
-      const billId = await createBill({
+      const payload = {
         payment_method: method,
         total: billTotal,
         items: items.map(({ product_id, quantity, unit_price, line_total }) => ({ product_id, quantity, unit_price, line_total })),
-      });
+      };
+      if (method === 'credit') {
+        payload.amount_paid = amountPaid;
+        payload.credit_remaining = creditRemaining ?? Math.max(0, billTotal - amountPaid);
+        payload.customer_name = customerName || null;
+        payload.customer_mobile = customerMobile || null;
+      }
+      const billId = await createBill(payload);
       if (doPrint && billId) {
         setBillPrinted(billId);
         setPrintContent({
           date: new Date().toLocaleString(),
           items,
+          subtotal,
+          discount: discountNum,
           total: billTotal,
-          method: 'Cash',
+          method: method === 'cash' ? 'Cash' : 'Credit',
+          amountPaid: method === 'credit' ? amountPaid : billTotal,
+          creditRemaining: method === 'credit' ? (creditRemaining ?? Math.max(0, billTotal - amountPaid)) : 0,
         });
         setLines([{ product_id: '', quantity: 1 }]);
-        setPendingPayment(null);
+        setDiscount('');
         setPrintPreviewModal(true);
-      } else {
-        setLines([{ product_id: '', quantity: 1 }]);
-        setPendingPayment(null);
       }
     } catch (err) {
       console.error(err);
@@ -176,6 +196,16 @@ export default function Bill() {
           <button type="button" className="btn btn-primary" onClick={addLine}>
             Add item
           </button>
+          <div className="bill-payment-options">
+            <label className="bill-radio-label">
+              <input type="radio" name="paymentMethod" checked={paymentMethod === 'cash'} onChange={() => setPaymentMethod('cash')} />
+              <span>Cash</span>
+            </label>
+            <label className="bill-radio-label">
+              <input type="radio" name="paymentMethod" checked={paymentMethod === 'credit'} onChange={() => setPaymentMethod('credit')} />
+              <span>Credit</span>
+            </label>
+          </div>
         </div>
         <div className="bill-items-table-wrap">
           <table className="bill-items-table">
@@ -232,11 +262,17 @@ export default function Bill() {
         </div>
       </div>
       <div className="bill-total card">
-        Total: {total.toFixed(2)}
+        {subtotal !== total && (
+          <span className="bill-subtotal">Subtotal: {subtotal.toFixed(2)}</span>
+        )}
+        <label className="bill-discount-label">
+          Discount (Rs): <input type="number" min="0" step="0.01" value={discount} onChange={(e) => setDiscount(e.target.value)} className="bill-discount-input" placeholder="0" />
+        </label>
+        <strong>Total: {total.toFixed(2)}</strong>
         <button
           type="button"
           className="btn btn-primary"
-          onClick={openPaymentModal}
+          onClick={onCompleteBill}
           disabled={!canComplete}
           style={{ marginLeft: '1rem' }}
         >
@@ -244,19 +280,48 @@ export default function Bill() {
         </button>
       </div>
 
-      {paymentModal && (
-        <div className="modal-overlay" onClick={() => setPaymentModal(false)}>
+      {creditAmountModal && (
+        <div className="modal-overlay" onClick={() => setCreditAmountModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Payment method</h3>
-            <p>Total: {total.toFixed(2)}</p>
+            <h3>Credit — Customer & amount</h3>
+            <div className="form-group">
+              <label>Customer name</label>
+              <input
+                type="text"
+                value={creditCustomerName}
+                onChange={(e) => setCreditCustomerName(e.target.value)}
+                placeholder="Customer name"
+              />
+            </div>
+            <div className="form-group">
+              <label>Mobile number</label>
+              <input
+                type="text"
+                value={creditCustomerMobile}
+                onChange={(e) => setCreditCustomerMobile(e.target.value)}
+                placeholder="Mobile number"
+              />
+            </div>
+            <p>Bill total: {total.toFixed(2)}</p>
+            <div className="form-group">
+              <label>Current amount (paid now)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={creditCurrentAmount}
+                onChange={(e) => setCreditCurrentAmount(e.target.value)}
+                placeholder="0"
+              />
+            </div>
+            <p className="credit-remaining-line">
+              <strong>Remaining amount:</strong> {(Math.max(0, total - (Number(creditCurrentAmount) || 0))).toFixed(2)}
+            </p>
             <div className="modal-actions">
-              <button type="button" className="btn btn-primary" onClick={() => handlePaymentChoice('cash')}>
-                Cash
+              <button type="button" className="btn btn-primary" onClick={confirmCreditBill}>
+                Confirm & Print
               </button>
-              <button type="button" className="btn btn-secondary" onClick={() => handlePaymentChoice('credit')}>
-                Credit
-              </button>
-              <button type="button" className="btn btn-secondary" onClick={() => setPaymentModal(false)}>
+              <button type="button" className="btn btn-secondary" onClick={() => setCreditAmountModal(false)}>
                 Cancel
               </button>
             </div>
@@ -289,7 +354,14 @@ export default function Bill() {
                   ))}
                 </tbody>
               </table>
+              {printContent.discount > 0 && <p className="receipt-discount">Discount: {printContent.discount.toFixed(2)}</p>}
               <p className="bill-total">Total: {printContent.total.toFixed(2)}</p>
+              {printContent.method === 'Credit' && (
+                <>
+                  <p className="receipt-credit-paid">Amount paid: {Number(printContent.amountPaid || 0).toFixed(2)}</p>
+                  <p className="receipt-credit-remaining">Remaining: {Number(printContent.creditRemaining || 0).toFixed(2)}</p>
+                </>
+              )}
               <p className="receipt-footer">Software Developed By: Hamza Ali - 03115337854</p>
             </div>
             <div className="modal-actions" style={{ marginTop: '1rem' }}>
@@ -326,7 +398,14 @@ export default function Bill() {
               ))}
             </tbody>
           </table>
+          {printContent.discount > 0 && <p className="receipt-discount">Discount: {printContent.discount.toFixed(2)}</p>}
           <p className="bill-total">Total: {printContent.total.toFixed(2)}</p>
+          {printContent.method === 'Credit' && (
+            <>
+              <p className="receipt-credit-paid">Amount paid: {Number(printContent.amountPaid || 0).toFixed(2)}</p>
+              <p className="receipt-credit-remaining">Remaining: {Number(printContent.creditRemaining || 0).toFixed(2)}</p>
+            </>
+          )}
           <p className="receipt-footer">Software Developed By: Hamza Ali - 03115337854</p>
         </div>
       )}
