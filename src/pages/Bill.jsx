@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { getStockWithQuantity, createBill, setBillPrinted, printBill } from '../api';
+import { getStockWithQuantity, createBill, setBillPrinted, printBill, isNearExpiry } from '../api';
 import './Bill.css';
 
 export default function Bill() {
@@ -16,7 +16,8 @@ export default function Bill() {
     const list = await getStockWithQuantity();
     const inStock = (list || []).filter((p) => {
       const qty = Number(p.quantity);
-      return !Number.isNaN(qty) && qty > 0;
+      if (Number.isNaN(qty) || qty <= 0) return false;
+      return !isNearExpiry(p);
     });
     setProducts(inStock);
   };

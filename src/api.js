@@ -1,5 +1,14 @@
 import * as store from './store';
 
+/** True if product has an expiry date within the next `days` days (e.g. 30). Used to hide from Bill and show on Near Expiry page. */
+export function isNearExpiry(product, days = 30) {
+  const expiry = (product.expiry_date || '').slice(0, 10);
+  if (!expiry) return false;
+  const today = new Date().toISOString().slice(0, 10);
+  const daysUntil = Math.ceil((new Date(expiry) - new Date(today)) / (24 * 60 * 60 * 1000));
+  return daysUntil >= 0 && daysUntil <= days;
+}
+
 export async function getProducts() {
   return store.getProducts();
 }

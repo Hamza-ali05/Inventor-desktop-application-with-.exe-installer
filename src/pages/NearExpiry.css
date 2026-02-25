@@ -1,0 +1,12 @@
+.near-expiry-page {
+  max-width: 100%;
+}
+
+.near-expiry-card h2 {
+  margin: 0 0 1rem;
+}
+
+.near-expiry-soon {
+  font-weight: 600;
+  color: #c53030;
+}
