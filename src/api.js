@@ -1,76 +1,79 @@
-const api = typeof window !== 'undefined' && window.electronAPI ? window.electronAPI : {};
+import * as store from './store';
 
 export async function getProducts() {
-  return api.getProducts ? api.getProducts() : [];
+  return store.getProducts();
 }
 export async function getProductsFromPurchases() {
-  return api.getProductsFromPurchases ? api.getProductsFromPurchases() : [];
+  return store.getProductsFromPurchases();
 }
 export async function getStockWithQuantity() {
-  return api.getStockWithQuantity ? api.getStockWithQuantity() : [];
+  return store.getStockWithQuantity();
 }
 export async function addProduct(data) {
-  return api.addProduct ? api.addProduct(data) : null;
+  return store.addProduct(data);
 }
 export async function updateProduct(id, data) {
-  return api.updateProduct ? api.updateProduct(id, data) : undefined;
+  return store.updateProduct(id, data);
 }
 export async function deleteProduct(id) {
-  return api.deleteProduct ? api.deleteProduct(id) : undefined;
+  return store.deleteProduct(id);
 }
 export async function getProductById(id) {
-  return api.getProductById ? api.getProductById(id) : null;
+  return store.getProductById(id);
 }
 export async function seedDefaultProducts() {
-  return api.seedDefaultProducts ? api.seedDefaultProducts() : 0;
+  return store.seedDefaultProducts();
 }
 
 export async function createBill(data) {
-  return api.createBill ? api.createBill(data) : null;
+  return store.createBill(data);
 }
 export async function setBillPrinted(billId) {
-  return api.setBillPrinted ? api.setBillPrinted(billId) : undefined;
+  return store.setBillPrinted(billId);
 }
 export async function getBills(filters) {
-  return api.getBills ? api.getBills(filters) : [];
+  return store.getBills(filters || {});
 }
 export async function getBillItems(billId) {
-  return api.getBillItems ? api.getBillItems(billId) : [];
+  return store.getBillItems(billId);
 }
 
 export async function getSalesSummary(filters) {
-  return api.getSalesSummary ? api.getSalesSummary(filters) : [];
+  return store.getSalesSummary(filters || {});
 }
 
 export async function getPurchases(filters) {
-  return api.getPurchases ? api.getPurchases(filters) : [];
+  return store.getPurchases(filters || {});
 }
 export async function getPurchasesCount(filters) {
-  return api.getPurchasesCount ? api.getPurchasesCount(filters) : 0;
+  return store.getPurchasesCount(filters || {});
 }
 export async function getPurchaseById(id) {
-  return api.getPurchaseById ? api.getPurchaseById(id) : null;
+  return store.getPurchaseById(id);
 }
 export async function addPurchase(data) {
-  return api.addPurchase ? api.addPurchase(data) : null;
+  return store.addPurchase(data);
 }
 export async function updatePurchase(id, data) {
-  return api.updatePurchase ? api.updatePurchase(id, data) : undefined;
+  return store.updatePurchase(id, data);
 }
 export async function deletePurchase(id) {
-  return api.deletePurchase ? api.deletePurchase(id) : undefined;
+  return store.deletePurchase(id);
 }
 
 export async function getBillsWithCredit() {
-  return api.getBillsWithCredit ? api.getBillsWithCredit() : [];
+  return store.getBillsWithCredit();
 }
 export async function addCreditPayment(billId, amount, paymentDate) {
-  return api.addCreditPayment ? api.addCreditPayment(billId, amount, paymentDate) : undefined;
+  return store.addCreditPayment(billId, amount, paymentDate);
 }
 export async function getCreditPayments(billId) {
-  return api.getCreditPayments ? api.getCreditPayments(billId) : [];
+  return store.getCreditPayments(billId);
 }
 
 export function printBill() {
-  if (api.printBill) api.printBill();
+  store.printBill();
+}
+export async function clearAllTables() {
+  return store.clearAllTables();
 }

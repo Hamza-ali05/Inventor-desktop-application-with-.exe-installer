@@ -208,13 +208,27 @@ tr:hover td {
   color: var(--fg-muted, #666);
 }
 @media print {
-  .nav, .no-print, button, .form-row, .modal-overlay {
+  .nav,
+  .no-print,
+  .modal-overlay {
     display: none !important;
   }
+  body * {
+    visibility: hidden;
+  }
+  .print-only,
+  .print-only * {
+    visibility: visible;
+  }
   .print-only {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 1rem;
+    background: #fff;
     display: block !important;
   }
-  .main { padding: 0; }
   .bill-receipt .receipt-shop-name {
     font-size: 1.25rem;
   }

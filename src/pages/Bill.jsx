@@ -9,7 +9,6 @@ export default function Bill() {
   const [products, setProducts] = useState([]);
   const [lines, setLines] = useState([{ product_id: '', quantity: 1 }]);
   const [paymentModal, setPaymentModal] = useState(false);
-  const [printModal, setPrintModal] = useState(false);
   const [printPreviewModal, setPrintPreviewModal] = useState(false);
   const [pendingPayment, setPendingPayment] = useState(null);
   const [printContent, setPrintContent] = useState(null);
@@ -17,7 +16,10 @@ export default function Bill() {
   const location = useLocation();
   const loadProducts = async () => {
     const list = await getStockWithQuantity();
-    const inStock = (list || []).filter((p) => Number(p.quantity) > 0);
+    const inStock = (list || []).filter((p) => {
+      const qty = Number(p.quantity);
+      return !Number.isNaN(qty) && qty > 0;
+    });
     setProducts(inStock);
   };
   useEffect(() => {
@@ -55,7 +57,7 @@ export default function Bill() {
     setPendingPayment({ method });
     setPaymentModal(false);
     if (method === 'cash') {
-      setPrintModal(true);
+      finishBill('cash', true);
     } else {
       finishBill('credit', false);
     }
@@ -86,25 +88,15 @@ export default function Bill() {
           method: 'Cash',
         });
         setLines([{ product_id: '', quantity: 1 }]);
-        setPrintModal(false);
         setPendingPayment(null);
         setPrintPreviewModal(true);
       } else {
         setLines([{ product_id: '', quantity: 1 }]);
-        setPrintModal(false);
         setPendingPayment(null);
       }
     } catch (err) {
       console.error(err);
       alert('Failed to create bill.');
-    }
-  };
-
-  const handlePrintAnswer = (yes) => {
-    if (yes) {
-      finishBill('cash', true);
-    } else {
-      finishBill('cash', false);
     }
   };
 
@@ -215,22 +207,6 @@ export default function Bill() {
               </button>
               <button type="button" className="btn btn-secondary" onClick={() => setPaymentModal(false)}>
                 Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {printModal && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h3>Print bill?</h3>
-            <div className="modal-actions">
-              <button type="button" className="btn btn-primary" onClick={() => handlePrintAnswer(true)}>
-                Yes, print
-              </button>
-              <button type="button" className="btn btn-secondary" onClick={() => handlePrintAnswer(false)}>
-                No
               </button>
             </div>
           </div>
