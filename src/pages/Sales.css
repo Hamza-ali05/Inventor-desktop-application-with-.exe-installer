@@ -15,3 +15,46 @@
 .summary {
   margin-bottom: 1rem;
 }
+
+.sales-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.sales-date-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.sales-filter-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.sales-filter-date-input,
+.sales-filter-check-btn {
+  height: 2rem;
+  padding: 0 0.5rem;
+  font-size: 0.875rem;
+  box-sizing: border-box;
+}
+
+.sales-filter-date-input {
+  width: 10rem;
+  min-width: 10rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.sales-filter-check-btn {
+  min-width: 5rem;
+}
+
+.sales-summary-stats {
+  margin-left: auto;
+}

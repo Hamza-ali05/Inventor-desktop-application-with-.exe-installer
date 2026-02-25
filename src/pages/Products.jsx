@@ -24,7 +24,7 @@ export default function Products() {
         {loading ? (
           <p>Loading…</p>
         ) : products.length === 0 ? (
-          <p>No stock yet. Add a purchase on the Purchases page to see stock here.</p>
+          <p>No stock yet. Add a purchase on the Purchase page to see stock here.</p>
         ) : (
           <div className="table-wrap">
             <table>

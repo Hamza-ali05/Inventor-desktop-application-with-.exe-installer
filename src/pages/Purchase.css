@@ -1,0 +1,182 @@
+.add-purchase-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.add-purchase-card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.add-purchase-card-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.add-purchase-btn {
+  min-width: 6rem;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8rem;
+}
+
+.purchase-form h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.purchase-form-buttons .form-row-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.purchase-form-buttons .form-row-buttons .btn {
+  min-width: 6rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.purchase-form .btn-back {
+  margin-bottom: 1rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.purchase-form .btn-back:hover {
+  background: var(--accent-hover);
+}
+
+.purchase-list {
+  margin-top: 1.5rem;
+}
+
+.purchase-list-full-width {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.purchase-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.purchase-list-header h2 {
+  margin: 0;
+}
+
+.purchase-list-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.purchase-form-buttons-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.purchase-form-buttons-inline .btn {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.purchase-list .table-wrap {
+  overflow-x: auto;
+}
+
+.purchase-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.purchase-form .input-readonly {
+  background: var(--muted, #eee);
+  cursor: default;
+}
+
+.purchase-form .input-single-purchase-price {
+  font-weight: normal;
+  background: var(--card, #fff);
+  cursor: default;
+}
+
+.purchase-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.purchase-filter-single {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.purchase-filter-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.purchase-filter-date-input,
+.purchase-filter-check-btn {
+  height: 2rem;
+  padding: 0 0.5rem;
+  font-size: 0.875rem;
+  box-sizing: border-box;
+}
+
+.purchase-filter-date-input {
+  width: 10rem;
+  min-width: 10rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.purchase-filter-check-btn {
+  min-width: 5rem;
+}
+
+.purchase-filter-date {
+  width: 8.5rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.purchase-pagination {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.purchase-page-info {
+  font-size: 0.9rem;
+  color: var(--fg-muted, #666);
+}

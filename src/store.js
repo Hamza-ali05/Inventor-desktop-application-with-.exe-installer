@@ -32,6 +32,10 @@ export function getProductsFromPurchases() {
   return Promise.resolve(products.filter((p) => ids.has(p.id)).map((p) => ({ ...p })));
 }
 
+/**
+ * Stock quantity = sum of all purchase quantities (old + new) minus sum of quantities used in completed bills.
+ * Stock increases when a purchase is added; stock decreases when a bill is completed (bill items).
+ */
 export function getStockWithQuantity() {
   const byProduct = {};
   purchases.forEach((p) => {
@@ -40,17 +44,17 @@ export function getStockWithQuantity() {
   billItems.forEach((bi) => {
     byProduct[bi.product_id] = (byProduct[bi.product_id] || 0) - bi.quantity;
   });
-  return Promise.resolve(
-    products.map((p) => ({
-      id: p.id,
-      name: p.name,
-      purchase_price: p.purchase_price,
-      sale_price: p.sale_price,
-      stock_entry_date: p.stock_entry_date,
-      expiry_date: p.expiry_date,
-      quantity: Math.max(0, byProduct[p.id] || 0),
-    }))
-  );
+  const withQuantity = products.map((p) => ({
+    id: p.id,
+    name: p.name,
+    purchase_price: p.purchase_price,
+    sale_price: p.sale_price,
+    stock_entry_date: p.stock_entry_date,
+    expiry_date: p.expiry_date,
+    quantity: Math.max(0, byProduct[p.id] || 0),
+  }));
+  // Only show products that have stock > 0; remove from stock until added again via purchase
+  return Promise.resolve(withQuantity.filter((p) => p.quantity > 0));
 }
 
 export function addProduct(data) {
@@ -111,6 +115,7 @@ export function createBill(data) {
     credit_remaining: creditRemaining,
     printed: 0,
   });
+  // Bill items reduce stock: stock = sum(purchases) - sum(bill items)
   data.items.forEach((item) => {
     billItems.push({
       id: nextId('billItem'),
@@ -120,8 +125,6 @@ export function createBill(data) {
       unit_price: item.unit_price,
       line_total: item.line_total,
     });
-    const prod = products.find((x) => x.id === item.product_id);
-    if (prod) prod.quantity = Math.max(0, (prod.quantity || 0) - item.quantity);
   });
   return Promise.resolve(id);
 }
@@ -170,8 +173,7 @@ export function getSalesSummary(filters = {}) {
       profit,
     };
   });
-  if (filters.fromDate) items = items.filter((i) => i.bill_date.slice(0, 10) >= filters.fromDate);
-  if (filters.toDate) items = items.filter((i) => i.bill_date.slice(0, 10) <= filters.toDate);
+  if (filters.date) items = items.filter((i) => (i.bill_date || '').slice(0, 10) === filters.date);
   items.sort((a, b) => (b.bill_date > a.bill_date ? 1 : -1));
   return Promise.resolve(items);
 }
@@ -181,8 +183,7 @@ export function getPurchases(filters = {}) {
     const p = products.find((x) => x.id === pur.product_id);
     return { ...pur, product_name: p ? p.name : '—' };
   });
-  if (filters.fromDate) list = list.filter((pur) => pur.purchase_date >= filters.fromDate);
-  if (filters.toDate) list = list.filter((pur) => pur.purchase_date.slice(0, 10) <= filters.toDate);
+  if (filters.date) list = list.filter((pur) => (pur.purchase_date || '').slice(0, 10) === filters.date);
   list.sort((a, b) => (b.purchase_date > a.purchase_date ? 1 : -1));
   const limit = Math.max(1, Math.min(1000, Number(filters.limit) || 10));
   const offset = Math.max(0, Number(filters.offset) || 0);
@@ -192,8 +193,7 @@ export function getPurchases(filters = {}) {
 
 export function getPurchasesCount(filters = {}) {
   let list = purchases;
-  if (filters.fromDate) list = list.filter((pur) => pur.purchase_date >= filters.fromDate);
-  if (filters.toDate) list = list.filter((pur) => pur.purchase_date.slice(0, 10) <= filters.toDate);
+  if (filters.date) list = list.filter((pur) => (pur.purchase_date || '').slice(0, 10) === filters.date);
   return Promise.resolve(list.length);
 }
 
@@ -216,9 +216,9 @@ export function addPurchase(data) {
     expiry_date: expiry,
     sale_price: data.sale_price != null ? data.sale_price : null,
   });
+  // Stock is computed as sum(purchases) - sum(bill items) in getStockWithQuantity
   const prod = products.find((x) => x.id === data.product_id);
   if (prod) {
-    prod.quantity = (prod.quantity || 0) + data.quantity;
     if (expiry) prod.expiry_date = expiry;
     if (data.sale_price != null) prod.sale_price = data.sale_price;
   }
@@ -228,16 +228,13 @@ export function addPurchase(data) {
 export function updatePurchase(id, data) {
   const pur = purchases.find((x) => x.id === id);
   if (!pur) return Promise.resolve();
-  const oldQty = pur.quantity;
-  const newQty = Number(data.quantity) || 0;
-  pur.quantity = newQty;
+  pur.quantity = Number(data.quantity) || 0;
   pur.total_value = Number(data.total_value);
   pur.purchase_date = data.purchase_date;
   pur.expiry_date = data.expiry_date || null;
   pur.sale_price = data.sale_price != null ? data.sale_price : null;
   const prod = products.find((x) => x.id === pur.product_id);
   if (prod) {
-    prod.quantity = (prod.quantity || 0) + (newQty - oldQty);
     if (pur.expiry_date) prod.expiry_date = pur.expiry_date;
     if (pur.sale_price != null) prod.sale_price = pur.sale_price;
   }
@@ -246,11 +243,7 @@ export function updatePurchase(id, data) {
 
 export function deletePurchase(id) {
   const pur = purchases.find((x) => x.id === id);
-  if (pur) {
-    const prod = products.find((x) => x.id === pur.product_id);
-    if (prod) prod.quantity = Math.max(0, (prod.quantity || 0) - pur.quantity);
-    purchases.splice(purchases.indexOf(pur), 1);
-  }
+  if (pur) purchases.splice(purchases.indexOf(pur), 1);
   return Promise.resolve();
 }
 

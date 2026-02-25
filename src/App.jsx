@@ -1,11 +1,11 @@
 import { useState, useCallback } from 'react';
-import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
+import { HashRouter, Routes, Route, NavLink } from 'react-router-dom';
 import './App.css';
 import Login, { isAuthenticated, setAuthenticated } from './pages/Login';
 import Bill from './pages/Bill';
 import Products from './pages/Products';
 import Sales from './pages/Sales';
-import Purchases from './pages/Purchases';
+import Purchase from './pages/Purchase';
 
 function Layout({ children, onLogout }) {
   return (
@@ -22,8 +22,8 @@ function Layout({ children, onLogout }) {
           <NavLink to="/sales" className={({ isActive }) => (isActive ? 'active' : '')}>
             Sales
           </NavLink>
-          <NavLink to="/purchases" className={({ isActive }) => (isActive ? 'active' : '')}>
-            Purchases
+          <NavLink to="/purchase" className={({ isActive }) => (isActive ? 'active' : '')}>
+            Purchase
           </NavLink>
         </div>
         <button type="button" className="btn btn-logout" onClick={onLogout}>
@@ -52,15 +52,15 @@ export default function App() {
   }
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Layout onLogout={handleLogout}>
         <Routes>
           <Route path="/" element={<Bill />} />
           <Route path="/stock" element={<Products />} />
           <Route path="/sales" element={<Sales />} />
-          <Route path="/purchases" element={<Purchases />} />
+          <Route path="/purchase" element={<Purchase />} />
         </Routes>
       </Layout>
-    </BrowserRouter>
+    </HashRouter>
   );
 }

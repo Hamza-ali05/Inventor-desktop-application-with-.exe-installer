@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getProducts, getProductsFromPurchases, addPurchase, addProduct, getPurchases, getPurchasesCount, getPurchaseById, updatePurchase, deletePurchase } from '../api';
-import './Purchases.css';
+import './Purchase.css';
 
 const QUANTITY_OPTIONS = Array.from({ length: 1000 }, (_, i) => i + 1);
 
@@ -19,13 +19,12 @@ const INITIAL_FORM = {
   expiry_date: '',
 };
 
-export default function Purchases() {
+function Purchase() {
   const PAGE_SIZE = 10;
   const [purchases, setPurchases] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const [filterDate, setFilterDate] = useState('');
   const [existingProducts, setExistingProducts] = useState([]);
   const [addMode, setAddMode] = useState(null);
   const [editingPurchaseId, setEditingPurchaseId] = useState(null);
@@ -35,7 +34,7 @@ export default function Purchases() {
   const qty = Number(form.quantity) || 1;
   const singlePurchasePrice = qty > 0 ? (totalVal / qty).toFixed(2) : '';
 
-  const filters = { fromDate: fromDate || undefined, toDate: toDate || undefined };
+  const filters = { date: filterDate || undefined };
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
 
@@ -182,24 +181,86 @@ export default function Purchases() {
   };
 
   return (
-    <div className="purchases-page">
-      <h1 className="page-title">Purchases</h1>
+    <div className="purchase-page">
+      <div className="card add-purchase-card">
+        <h2 className="add-purchase-card-title">Add purchase</h2>
+        <div className="add-purchase-card-buttons">
+          <button type="button" className="btn btn-primary add-purchase-btn" onClick={openNewPurchase}>
+            Add New Item
+          </button>
+          <button type="button" className="btn btn-primary add-purchase-btn" onClick={openExistingItem}>
+            Add Existing Item
+          </button>
+        </div>
+      </div>
 
-      {addMode === null ? (
-        <div className="card purchase-form purchase-form-buttons">
-          <h2>Add purchase</h2>
-          <div className="form-row form-row-buttons">
-            <button type="button" className="btn btn-primary" onClick={openNewPurchase}>
-              Add New Purchase
-            </button>
-            <button type="button" className="btn btn-primary" onClick={openExistingItem}>
-              Add Existing Item
-            </button>
+      <div className="card purchase-list purchase-list-full-width">
+        <div className="purchase-list-header">
+          <div className="purchase-list-header-right">
+            <div className="purchase-filter-single">
+              <label className="purchase-filter-label">Enter Date:</label>
+              <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="purchase-filter-date-input" aria-label="Enter date" />
+              <button type="button" className="btn btn-primary btn-sm purchase-filter-check-btn" onClick={applyFilter}>Check</button>
+            </div>
           </div>
         </div>
-      ) : (
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Purchase Price</th>
+                <th>Single Purchase Price</th>
+                <th>Single Sale Price</th>
+                <th>Purchase date</th>
+                <th>Expiry date</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {purchases.length === 0 ? (
+                <tr>
+                  <td colSpan={8}>No purchases yet. Add one using the buttons above.</td>
+                </tr>
+              ) : (
+                purchases.map((p) => (
+                  <tr key={p.id}>
+                    <td>{p.product_name ?? '—'}</td>
+                    <td>{p.quantity}</td>
+                    <td>{Number(p.total_value).toFixed(2)}</td>
+                    <td>{p.quantity > 0 ? (Number(p.total_value) / p.quantity).toFixed(2) : '—'}</td>
+                    <td>{p.sale_price != null ? Number(p.sale_price).toFixed(2) : '—'}</td>
+                    <td>{formatDate(p.purchase_date)}</td>
+                    <td>{formatDate(p.expiry_date)}</td>
+                    <td className="purchase-actions">
+                      <button type="button" className="btn btn-sm btn-primary" onClick={() => openEditPurchase(p)}>Update</button>
+                      <button type="button" className="btn btn-sm btn-danger" onClick={() => handleDelete(p.id)}>Delete</button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        {totalCount > 0 && (
+          <div className="purchase-pagination">
+            <button type="button" className="btn btn-secondary btn-sm" onClick={goPrev} disabled={currentPage <= 1}>
+              Previous
+            </button>
+            <span className="purchase-page-info">
+              Page {currentPage} of {totalPages} ({totalCount} record{totalCount !== 1 ? 's' : ''})
+            </span>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={goNext} disabled={currentPage >= totalPages}>
+              Next
+            </button>
+          </div>
+        )}
+      </div>
+
+      {addMode !== null && (
         <form onSubmit={addMode === 'edit' ? handleUpdateSubmit : handleAddSubmit} className="card purchase-form">
-          <h2>{addMode === 'edit' ? 'Update purchase' : addMode === 'new' ? 'Add New Purchase' : 'Add Existing Item'}</h2>
+          <h2>{addMode === 'edit' ? 'Update purchase' : addMode === 'new' ? 'Add New Item' : 'Add Existing Item'}</h2>
           <button type="button" className="btn btn-back" onClick={closeForm} aria-label="Back">
             ← Back
           </button>
@@ -296,69 +357,8 @@ export default function Purchases() {
         </div>
       </form>
       )}
-
-      <div className="card purchases-list">
-        <div className="purchases-list-header">
-          <h2>All purchases</h2>
-          <div className="purchases-filter">
-            <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="purchases-filter-date" aria-label="From date" />
-            <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="purchases-filter-date" aria-label="To date" />
-            <button type="button" className="btn btn-primary btn-sm" onClick={applyFilter}>Check</button>
-          </div>
-        </div>
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Quantity</th>
-                <th>Purchase Price</th>
-                <th>Single Purchase Price</th>
-                <th>Single Sale Price</th>
-                <th>Purchase date</th>
-                <th>Expiry date</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {purchases.length === 0 ? (
-                <tr>
-                  <td colSpan={8}>No purchases yet. Add one above.</td>
-                </tr>
-              ) : (
-                purchases.map((p) => (
-                  <tr key={p.id}>
-                    <td>{p.product_name ?? '—'}</td>
-                    <td>{p.quantity}</td>
-                    <td>{Number(p.total_value).toFixed(2)}</td>
-                    <td>{p.quantity > 0 ? (Number(p.total_value) / p.quantity).toFixed(2) : '—'}</td>
-                    <td>{p.sale_price != null ? Number(p.sale_price).toFixed(2) : '—'}</td>
-                    <td>{formatDate(p.purchase_date)}</td>
-                    <td>{formatDate(p.expiry_date)}</td>
-                    <td className="purchase-actions">
-                      <button type="button" className="btn btn-sm btn-primary" onClick={() => openEditPurchase(p)}>Update</button>
-                      <button type="button" className="btn btn-sm btn-danger" onClick={() => handleDelete(p.id)}>Delete</button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-        {totalCount > 0 && (
-          <div className="purchases-pagination">
-            <button type="button" className="btn btn-secondary btn-sm" onClick={goPrev} disabled={currentPage <= 1}>
-              Previous
-            </button>
-            <span className="purchases-page-info">
-              Page {currentPage} of {totalPages} ({totalCount} record{totalCount !== 1 ? 's' : ''})
-            </span>
-            <button type="button" className="btn btn-secondary btn-sm" onClick={goNext} disabled={currentPage >= totalPages}>
-              Next
-            </button>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
+
+export default Purchase;

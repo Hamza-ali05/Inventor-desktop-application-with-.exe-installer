@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getSalesSummary, getBillsWithCredit, addCreditPayment, getCreditPayments } from '../api';
 import './Sales.css';
 
@@ -8,11 +8,15 @@ export default function Sales() {
   const [loading, setLoading] = useState(true);
   const [creditModal, setCreditModal] = useState(null);
   const [payAmount, setPayAmount] = useState('');
+  const [filterDate, setFilterDate] = useState('');
+  const filterDateRef = useRef('');
 
-  const load = async () => {
+  const load = async (dateToLoad) => {
     setLoading(true);
+    const date = dateToLoad !== undefined ? dateToLoad : filterDateRef.current;
+    const filters = date ? { date } : {};
     const [summary, credit] = await Promise.all([
-      getSalesSummary({}),
+      getSalesSummary(filters),
       getBillsWithCredit(),
     ]);
     setSales(summary || []);
@@ -23,6 +27,18 @@ export default function Sales() {
   useEffect(() => {
     load();
   }, []);
+
+  const applyFilter = () => {
+    const selectedDate = filterDateRef.current;
+    setFilterDate(selectedDate);
+    load(selectedDate);
+  };
+
+  const handleDateChange = (e) => {
+    const value = e.target.value;
+    filterDateRef.current = value;
+    setFilterDate(value);
+  };
 
   const handlePayCredit = async () => {
     if (!creditModal || !payAmount || Number(payAmount) <= 0) return;
@@ -40,10 +56,17 @@ export default function Sales() {
   return (
     <div className="sales-page">
       <h1 className="page-title">Sales</h1>
-      <div className="summary card">
-        <strong>Total quantity sold:</strong> {totalQty} &nbsp;|&nbsp;
-        <strong>Total revenue:</strong> {totalRevenue.toFixed(2)} &nbsp;|&nbsp;
-        <strong>Total profit:</strong> {totalProfit.toFixed(2)}
+      <div className="summary card sales-summary-row">
+        <div className="sales-date-filter">
+          <label className="sales-filter-label">Enter Date:</label>
+          <input type="date" value={filterDate} onChange={handleDateChange} className="sales-filter-date-input" aria-label="Enter date" />
+          <button type="button" className="btn btn-primary btn-sm sales-filter-check-btn" onClick={applyFilter}>Check</button>
+        </div>
+        <div className="sales-summary-stats">
+          <strong>Total quantity sold:</strong> {totalQty} &nbsp;|&nbsp;
+          <strong>Total revenue:</strong> {totalRevenue.toFixed(2)} &nbsp;|&nbsp;
+          <strong>Total profit:</strong> {totalProfit.toFixed(2)}
+        </div>
       </div>
       <div className="card">
         {loading ? (
@@ -59,7 +82,7 @@ export default function Sales() {
                   <th>Product</th>
                   <th>Qty</th>
                   <th>Unit price</th>
-                  <th>Line total</th>
+                  <th>Total Price</th>
                   <th>Profit</th>
                 </tr>
               </thead>
